@@ -79,6 +79,6 @@ start_link(Name) ->
 %% 2012.
 snowflake_now() -> integer().
 snowflake_now() ->
-    {MegS, S, MuS} = erlang:now(),
+    {MegS, S, MuS} = erlang:timestamp(),
     Secs = (1000000*MegS + S)*1000 + trunc(MuS/1000),
     Secs - ?MS_EPOCH_DIFF.
