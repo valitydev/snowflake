@@ -104,7 +104,7 @@ find_nearest() ->
       [] -> none;
       [Pid] -> Pid;
       List -> random_member(List)
-	end.
+    end.
 
 -spec
 start_snowstorm(Server :: pid(), Name :: atom()) -> Pid :: pid().
