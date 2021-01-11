@@ -150,7 +150,7 @@ init(_Args) ->
 %% ------------------
 %% Internal functions
 
-%% By default, pg is disabled in kernel
+%% By default, pg (and pg2) is disabled in kernel
 %% and although pg2 start itself implicitly,
 %% pg requires either enable it in configuration
 %% or start manually
