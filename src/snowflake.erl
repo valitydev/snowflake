@@ -66,6 +66,7 @@ new(Storm) when is_pid(Storm) ->
 new(Server :: pid(), Name :: atom() | pid()) -> uuid().
 new(Server, Name) when is_atom(Name) ->     
     Children = supervisor:which_children(Server),
+	erlang:display({Server, Name, Children}),
     case lists:keyfind(Name, 1, Children) of
 	false -> 
 	    new(start_snowstorm(Server, Name));
@@ -100,11 +101,12 @@ deserialize(Str) when is_list(Str) -> base64:decode(list_to_binary(Str)).
 %% service on this node, and then picks one randomly from all known.
 find_nearest() -> pid() | none.
 find_nearest() ->
-    case pg2:get_closest_pid(?MODULE) of
-	{error, _} -> none;
-	Pid -> Pid
-    end.
-	     
+	case get_members() of
+	[] -> none;
+	[Pid] -> Pid;
+	List -> random_member(List)
+	end.
+
 -spec
 start_snowstorm(Server :: pid(), Name :: atom()) -> Pid :: pid().
 start_snowstorm(Server, Name) ->
@@ -123,16 +125,16 @@ start_snowstorm(Server, Name) ->
 %% Application Behaviour
 
 start(_Type, _Args) ->
+	{ok, _} = ensure_pg_started(),
     {ok, Pid} = supervisor:start_link({local, ?SUP}, ?MODULE, []),
-    pg2:create(?MODULE),
-    ok = pg2:join(?MODULE, Pid),
+    ok = pg:join(?MODULE, Pid),
     {ok, Pid}.
 
 stop(_State) ->
     case whereis(?SUP) of
 	undefined -> ok;
 	Pid ->
-	    _ = pg2:leave(?MODULE, Pid),
+	    _ = pg:leave(?MODULE, Pid),
 	    ok
     end.
 
@@ -146,3 +148,34 @@ stop(_State) ->
 init(_Args) ->
     {ok, {{one_for_one, 5, 10}, []}}.
 
+%% ------------------
+%% Internal functions
+
+%% By default, pg is disabled in kernel
+%% and although pg2 start itself implicitly,
+%% pg requires either enable it in configuration
+%% or start manually
+ensure_pg_started() ->
+	case whereis(pg) of
+		undefined ->
+			C = #{id => pg,
+				start => {pg, start_link, []},
+				restart => permanent,
+				shutdown => 1000,
+				type => worker,
+				modules => [pg]},
+			supervisor:start_child(kernel_safe_sup, C);
+		Pg2Pid ->
+			{ok, Pg2Pid}
+	end.
+
+get_members() ->
+	case pg:get_local_members(?MODULE) of
+		[] -> pg:get_members(?MODULE);
+		Members -> Members
+	end.
+
+random_member(List) ->
+	X = abs(erlang:monotonic_time()
+		bxor erlang:unique_integer()),
+	lists:nth((X rem length(List)) + 1, List).
