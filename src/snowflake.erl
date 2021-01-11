@@ -66,7 +66,6 @@ new(Storm) when is_pid(Storm) ->
 new(Server :: pid(), Name :: atom() | pid()) -> uuid().
 new(Server, Name) when is_atom(Name) ->     
     Children = supervisor:which_children(Server),
-	erlang:display({Server, Name, Children}),
     case lists:keyfind(Name, 1, Children) of
 	false -> 
 	    new(start_snowstorm(Server, Name));
