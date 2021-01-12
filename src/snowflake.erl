@@ -164,8 +164,8 @@ ensure_pg_started() ->
             type => worker,
             modules => [pg]},
         supervisor:start_child(kernel_safe_sup, C);
-      Pg2Pid ->
-        {ok, Pg2Pid}
+      PgPid ->
+        {ok, PgPid}
     end.
 
 get_members() ->
