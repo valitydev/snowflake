@@ -10,5 +10,6 @@ collision_testGen() ->
 	 [{snowflake:new(), snowflake:new()} || _I <- lists:seq(1,40)])).
 
 collision_test_() ->
+    pg:start_link(),
     application:start(snowflake),
     [collision_testGen() || _I <- lists:seq(1,200)].

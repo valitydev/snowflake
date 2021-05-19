@@ -3,6 +3,8 @@
 -include_lib("stdlib/include/assert.hrl").
 
 -export([all/0]).
+-export([init_per_suite/1]).
+-export([end_per_suite/1]).
 
 -export([machine_id_integer_test/1]).
 -export([machine_id_integer_fail_test/1]).
@@ -27,6 +29,15 @@ all() ->
         machine_id_env_match_test,
         machine_id_env_match_fail_test
     ].
+
+-spec init_per_suite(config()) -> config().
+init_per_suite(Config) ->
+    pg:start_link(),
+    Config.
+
+-spec end_per_suite(config()) -> _.
+end_per_suite(C) ->
+    C.
 
 -spec machine_id_integer_test(config()) -> test_return().
 machine_id_integer_test(_C) ->

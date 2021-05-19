@@ -100,9 +100,9 @@ deserialize(Str) when is_list(Str) -> base64:decode(list_to_binary(Str)).
 %% service on this node, and then picks one randomly from all known.
 find_nearest() -> pid() | none.
 find_nearest() ->
-    case pg2:get_closest_pid(?MODULE) of
-	{error, _} -> none;
-	Pid -> Pid
+    case pg:get_members(?MODULE) of
+	[] -> none;
+	PidList -> random_element(PidList)
     end.
 	     
 -spec
@@ -119,20 +119,24 @@ start_snowstorm(Server, Name) ->
             Child
     end.
 
+random_element(List) ->
+	X = abs(erlang:monotonic_time()
+		bxor erlang:unique_integer()),
+	lists:nth((X rem length(List)) + 1, List).
+
 %% ---------------------
 %% Application Behaviour
 
 start(_Type, _Args) ->
     {ok, Pid} = supervisor:start_link({local, ?SUP}, ?MODULE, []),
-    pg2:create(?MODULE),
-    ok = pg2:join(?MODULE, Pid),
+    ok = pg:join(?MODULE, Pid),
     {ok, Pid}.
 
 stop(_State) ->
     case whereis(?SUP) of
 	undefined -> ok;
 	Pid ->
-	    _ = pg2:leave(?MODULE, Pid),
+	    _ = pg:leave(?MODULE, Pid),
 	    ok
     end.
 

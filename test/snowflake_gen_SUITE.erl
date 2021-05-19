@@ -3,6 +3,8 @@
 -include_lib("stdlib/include/assert.hrl").
 
 -export([all/0]).
+-export([init_per_suite/1]).
+-export([end_per_suite/1]).
 
 -export([timestamp_init_validation_test/1]).
 -export([machine_id_init_validation_test/1]).
@@ -32,6 +34,15 @@ all() ->
         confugurable_backward_clock_moving_test,
         exhausted_test
     ].
+
+-spec init_per_suite(config()) -> config().
+init_per_suite(Config) ->
+    pg:start_link(),
+    Config.
+
+-spec end_per_suite(config()) -> _.
+end_per_suite(C) ->
+    C.
 
 -spec timestamp_init_validation_test(config()) -> test_return().
 timestamp_init_validation_test(_C) ->
